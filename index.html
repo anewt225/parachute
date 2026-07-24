@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parachute — interactive career tools</title>
+<meta name="description" content="Interactive, no-sign-up remakes of the analog self-assessment exercises from What Color Is Your Parachute? Start with the Prioritizing Grid.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E%F0%9F%AA%82%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --bg:#f8fafc;--surface:#ffffff;--surface-2:#f1f5f9;--text:#1e293b;--muted:#64748b;--faint:#94a3b8;
+    --border:#e2e8f0;--border-strong:#cbd5e1;--accent:#c2410c;--accent-hover:#9a3412;--accent-soft:#fff2e9;
+    --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px -16px rgba(15,23,42,.25);
+    --shadow-lift:0 10px 26px -14px rgba(15,23,42,.3);color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0f172a;--surface:#1e293b;--surface-2:#273449;--text:#e2e8f0;--muted:#94a3b8;--faint:#64748b;
+      --border:#334155;--border-strong:#475569;--accent:#fb8b3c;--accent-hover:#fca55f;--accent-soft:#3a2213;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -18px rgba(0,0,0,.7);--shadow-lift:0 12px 28px -14px rgba(0,0,0,.65);color-scheme:dark;}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased;
+    padding:clamp(20px,6vw,72px) 18px 80px}
+  .wrap{max-width:760px;margin:0 auto}
+  .eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:.72rem;font-weight:700;color:var(--accent);margin:0 0 .7rem}
+  h1{font-size:clamp(2rem,6vw,3rem);line-height:1.08;letter-spacing:-.025em;margin:0 0 .5rem;font-weight:750;text-wrap:balance}
+  .lede{color:var(--muted);font-size:clamp(1.02rem,2.4vw,1.18rem);max-width:56ch;margin:.3rem 0 0}
+  .lede em{color:var(--text);font-style:italic}
+  .hr{height:1px;background:var(--border);border:0;margin:clamp(1.8rem,5vw,2.8rem) 0}
+  h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:700;margin:0 0 1rem}
+
+  .grid{display:grid;gap:1rem;grid-template-columns:1fr}
+  @media (min-width:620px){.grid{grid-template-columns:1fr 1fr}}
+  .tool{display:flex;flex-direction:column;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:1.4rem 1.4rem 1.5rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);
+    transition:transform .12s,box-shadow .12s,border-color .12s}
+  .tool:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift);border-color:var(--accent)}
+  .tool .ic{font-size:1.6rem;line-height:1}
+  .tool h3{margin:.2rem 0 0;font-size:1.18rem;letter-spacing:-.01em}
+  .tool p{margin:.1rem 0 0;color:var(--muted);font-size:.92rem}
+  .tool .go{margin-top:auto;padding-top:.7rem;color:var(--accent);font-weight:600;font-size:.9rem}
+  .tool.soon{cursor:default;border-style:dashed;box-shadow:none;opacity:.85}
+  .tool.soon:hover{transform:none;box-shadow:none;border-color:var(--border-strong)}
+  .tool.soon .go{color:var(--faint)}
+  .badge{display:inline-block;font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;color:var(--accent);
+    background:var(--accent-soft);border-radius:99px;padding:.2em .6em;align-self:flex-start}
+
+  footer{margin-top:clamp(2.2rem,6vw,3.4rem);color:var(--faint);font-size:.82rem;line-height:1.7}
+  footer a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+  footer a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="eyebrow">🪂 Parachute</p>
+    <h1>Analog career exercises, rebuilt for the browser.</h1>
+    <p class="lede">Interactive remakes of the pen-and-paper self-assessment worksheets popularized by <em>What&nbsp;Color&nbsp;Is&nbsp;Your&nbsp;Parachute?</em> — faster to work through, with the tallying and ranking done for you. No sign-up, works offline, saved in your browser.</p>
+
+    <hr class="hr">
+    <h2>The tools</h2>
+    <div class="grid">
+      <a class="tool" href="./prioritizing-grid/">
+        <span class="ic">🗳️</span>
+        <span class="badge">Live</span>
+        <h3>Prioritizing Grid</h3>
+        <p>Rank anything by comparing it two at a time. Includes a fast “express” mode that infers the rest of the order from your choices.</p>
+        <span class="go">Open the tool →</span>
+      </a>
+      <div class="tool soon">
+        <span class="ic">✳️</span>
+        <h3>More on the way</h3>
+        <p>Additional exercises from the book are being adapted next — one folder at a time.</p>
+        <span class="go">Coming soon</span>
+      </div>
+    </div>
+
+    <footer>
+      Built by <a href="https://github.com/anewt225">Alex Newton</a> · source on <a href="https://github.com/anewt225/parachute">GitHub</a>.<br>
+      Original exercises inspired by <em>What Color Is Your Parachute?</em> by Richard N. Bolles. This project is an independent, original reimplementation and is not affiliated with or endorsed by the book or its publisher.
+    </footer>
+  </div>
+</body>
+</html>

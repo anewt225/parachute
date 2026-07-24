@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="An interactive pairwise-comparison tool for prioritizing a list. Judge items two at a time and get a ranked order, with a fast express mode. No sign-up, works offline, saves in your browser.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E%F0%9F%97%B3%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<title>Prioritizing Grid</title>
+<style>
+  :root{
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --bg:#f8fafc;--surface:#ffffff;--surface-2:#f1f5f9;--text:#1e293b;--muted:#64748b;--faint:#94a3b8;
+    --border:#e2e8f0;--border-strong:#cbd5e1;--accent:#c2410c;--accent-hover:#9a3412;--accent-soft:#fff2e9;
+    --accent-ring:rgba(194,65,12,.35);--info:#475569;
+    --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px -16px rgba(15,23,42,.25);
+    --shadow-lift:0 6px 16px -8px rgba(15,23,42,.28);color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0f172a;--surface:#1e293b;--surface-2:#273449;--text:#e2e8f0;--muted:#94a3b8;--faint:#64748b;
+      --border:#334155;--border-strong:#475569;--accent:#fb8b3c;--accent-hover:#fca55f;--accent-soft:#3a2213;
+      --accent-ring:rgba(251,139,60,.4);--info:#94a3b8;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -18px rgba(0,0,0,.7);
+      --shadow-lift:0 8px 20px -10px rgba(0,0,0,.6);color-scheme:dark;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f8fafc;--surface:#ffffff;--surface-2:#f1f5f9;--text:#1e293b;--muted:#64748b;--faint:#94a3b8;
+    --border:#e2e8f0;--border-strong:#cbd5e1;--accent:#c2410c;--accent-hover:#9a3412;--accent-soft:#fff2e9;
+    --accent-ring:rgba(194,65,12,.35);--info:#475569;color-scheme:light;
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f172a;--surface:#1e293b;--surface-2:#273449;--text:#e2e8f0;--muted:#94a3b8;--faint:#64748b;
+    --border:#334155;--border-strong:#475569;--accent:#fb8b3c;--accent-hover:#fca55f;--accent-soft:#3a2213;
+    --accent-ring:rgba(251,139,60,.4);--info:#94a3b8;color-scheme:dark;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;
+    padding:clamp(16px,4vw,48px) 16px 72px;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:clamp(22px,4.5vw,40px)}
+
+  .eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;font-weight:700;color:var(--accent);margin:0 0 .5rem}
+  h1{font-size:clamp(1.55rem,4.5vw,2.15rem);line-height:1.12;margin:0 0 .4rem;letter-spacing:-.02em;text-wrap:balance;font-weight:700}
+  h2{font-size:1.2rem;margin:0 0 .25rem;letter-spacing:-.01em;font-weight:650}
+  .sub{color:var(--muted);margin:.25rem 0 0;max-width:58ch}
+  p{margin:.55rem 0}
+  .hr{height:1px;background:var(--border);border:0;margin:1.5rem 0}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  .steps{font-size:.86rem;color:var(--muted);margin:1.1rem 0 0;padding:0;list-style:none;display:grid;gap:.4rem;counter-reset:s}
+  .steps li{padding-left:2em;position:relative}
+  .steps li b{color:var(--text);font-weight:600}
+  .steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:.05em;width:1.4em;height:1.4em;
+    background:var(--accent-soft);color:var(--accent);border-radius:50%;display:grid;place-items:center;font-size:.72rem;font-weight:700}
+
+  button{font-family:inherit;cursor:pointer}
+  .btn{font-weight:600;font-size:.92rem;border-radius:9px;padding:.62em 1.15em;border:1px solid transparent;
+    background:var(--accent);color:#fff;transition:background .12s,transform .08s,box-shadow .12s}
+  .btn:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:var(--shadow-lift)}
+  .btn:active{transform:translateY(0)}
+  .btn.ghost{background:var(--surface);color:var(--text);border-color:var(--border-strong)}
+  .btn.ghost:hover{background:var(--surface-2);border-color:var(--muted);box-shadow:none;transform:none}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none;background:var(--accent)}
+  .btn.ghost:disabled{background:var(--surface)}
+  .link{background:none;border:0;color:var(--accent);padding:0;font-size:inherit;font-family:inherit;font-weight:600;
+    text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+  .link:hover{color:var(--accent-hover)}
+  .link.subtle{color:var(--muted);font-weight:500}
+  .link.subtle:hover{color:var(--text)}
+  a{color:var(--accent)}
+  .row{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+  .between{justify-content:space-between}
+
+  /* ---- express entry + tooltip ---- */
+  .exrow{display:flex;justify-content:center;margin-top:1rem}
+  .exwrap{position:relative;display:inline-flex}
+  .exlink{font-size:.86rem;display:inline-flex;align-items:center;gap:.35em}
+  .tipbox{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(4px);
+    width:min(310px,82vw);background:var(--text);color:var(--bg);padding:.75em .85em;border-radius:10px;font-size:.79rem;
+    line-height:1.5;font-weight:400;text-align:left;opacity:0;visibility:hidden;transition:.15s;box-shadow:var(--shadow-lift);z-index:30}
+  .tipbox b{font-weight:700}
+  .tipbox::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--text)}
+  .exwrap:hover .tipbox,.exwrap:focus-within .tipbox{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+  .fx{font-weight:700;white-space:nowrap;padding:.02em .4em;border-radius:4px;background:color-mix(in srgb, currentColor 16%, transparent)}
+
+  /* ---- setup ---- */
+  .addrow{display:flex;gap:.6rem;margin:1.1rem 0 .2rem}
+  input[type=text]{font-family:inherit;font-size:1rem;color:var(--text);background:var(--surface);
+    border:1px solid var(--border-strong);border-radius:9px;padding:.6em .8em;flex:1 1 auto;min-width:0}
+  input[type=text]:focus{outline:2px solid var(--accent-ring);outline-offset:1px;border-color:var(--accent)}
+  .items{list-style:none;margin:.5rem 0 0;padding:0;display:grid;gap:.4rem}
+  .item{display:flex;align-items:center;gap:.7rem;padding:.4rem .5rem;border:1px solid var(--border);border-radius:9px;background:var(--surface)}
+  .num{flex:none;width:1.7em;height:1.7em;border-radius:7px;background:var(--surface-2);color:var(--muted);display:grid;place-items:center;
+    font-size:.8rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .item input.name{border:1px solid transparent;background:transparent;font-size:1rem;flex:1 1 auto;min-width:0;color:var(--text);border-radius:6px;padding:.25em .35em}
+  .item input.name:focus{outline:none;border-color:var(--border-strong);background:var(--surface)}
+  .del{border:0;background:none;color:var(--faint);font-size:1rem;line-height:1;padding:.3em .4em;border-radius:6px}
+  .del:hover{color:var(--accent);background:var(--accent-soft)}
+  .empty{color:var(--faint);padding:.7rem .2rem;font-size:.92rem}
+
+  .workload{display:flex;align-items:center;gap:.9rem;margin:1.2rem 0 0;padding:.85rem 1rem;border-radius:11px;background:var(--surface-2);border:1px solid var(--border)}
+  .workload .big{font-size:1.5rem;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1}
+  .workload .lbl{font-size:.85rem;color:var(--muted)}
+  .workload .lbl b{color:var(--text)}
+  .caution{color:var(--info);font-size:.82rem;margin:.55rem 0 0}
+
+  /* ---- progress ---- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.5rem}
+  .count{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin:.3rem 0 1.6rem}
+  .bar > i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s ease}
+
+  /* ---- pair choice ---- */
+  .ask{text-align:center;color:var(--muted);font-size:1rem;margin:.2rem 0 1.1rem}
+  .ask b{color:var(--text);font-weight:600}
+  .tb{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:.72rem;
+    text-transform:uppercase;letter-spacing:.08em;padding:.2em .6em;border-radius:99px;margin-bottom:.5rem}
+  .pair{display:grid;grid-template-columns:1fr auto 1fr;gap:clamp(.5rem,2.5vw,1.2rem);align-items:stretch}
+  .choice{position:relative;background:var(--surface);border:1.5px solid var(--border-strong);border-radius:14px;
+    padding:clamp(1.2rem,4vw,2rem) 1rem;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:.7rem;text-align:center;color:var(--text);font-size:clamp(1.02rem,3vw,1.28rem);line-height:1.28;font-weight:600;
+    transition:transform .1s,border-color .12s,box-shadow .12s,background .12s}
+  .choice:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:var(--shadow-lift)}
+  .choice:focus-visible{outline:3px solid var(--accent-ring);outline-offset:2px}
+  .choice .tag{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-weight:700}
+  .choice .cnum{width:1.9em;height:1.9em;border-radius:8px;background:var(--surface-2);color:var(--muted);display:grid;place-items:center;
+    font-size:.82rem;font-weight:700;font-variant-numeric:tabular-nums}
+  .choice .check{position:absolute;top:10px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;
+    display:grid;place-items:center;font-size:.8rem;opacity:0;transform:scale(.5);transition:.15s}
+  .choice.chosen{border-color:var(--accent);background:var(--accent-soft)}
+  .choice.chosen .check{opacity:1;transform:scale(1)}
+  .choice.chosen .cnum{background:var(--accent);color:#fff}
+  .vs{align-self:center;font-weight:700;color:var(--faint);font-size:.82rem;text-transform:uppercase;letter-spacing:.05em}
+  .navrow{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:1.5rem;flex-wrap:wrap}
+  .altlinks{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+  .hint{font-size:.76rem;color:var(--faint)}
+  kbd{font-family:var(--sans);font-size:.74em;font-weight:600;border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:5px;
+    padding:.05em .45em;color:var(--muted);background:var(--surface)}
+
+  /* ---- order-picker (multi-way tiebreak) ---- */
+  .orderlist{display:grid;gap:.55rem;margin:1rem 0 0}
+  .oitem{display:flex;align-items:center;gap:.8rem;width:100%;text-align:left;padding:.75rem .9rem;border-radius:11px;
+    border:1.5px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:1.02rem;font-weight:500;transition:border-color .12s,background .12s}
+  .oitem:hover:not(:disabled){border-color:var(--accent)}
+  .oitem:disabled{cursor:default;background:var(--accent-soft);border-color:var(--accent)}
+  .oitem .rankbadge{flex:none;width:1.9em;height:1.9em;border-radius:8px;display:grid;place-items:center;font-weight:700;
+    font-variant-numeric:tabular-nums;background:var(--surface-2);color:var(--faint);font-size:.85rem}
+  .oitem:disabled .rankbadge{background:var(--accent);color:#fff}
+
+  /* ---- grid ---- */
+  .gridwrap{overflow-x:auto;padding-bottom:.4rem;margin-top:.6rem}
+  table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+  table.grid th,table.grid td{border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
+  table.grid tr th:first-child,table.grid tr td:first-child{border-left:1px solid var(--border)}
+  table.grid tr:first-child th{border-top:1px solid var(--border)}
+  table.grid th{font-weight:700;color:var(--muted);font-size:.8rem;padding:.35rem;background:var(--surface-2)}
+  table.grid th.corner{background:var(--surface)}
+  table.grid th.rowlab{text-align:left;padding:.35rem .7rem;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    font-weight:600;color:var(--text);background:var(--surface)}
+  table.grid td.cell{width:40px;height:40px;padding:0;cursor:pointer;background:var(--surface);text-align:center}
+  table.grid td.cell:hover{background:var(--accent-soft)}
+  table.grid td.blocked{background:var(--surface-2);cursor:default}
+  .cellmark{width:26px;height:26px;margin:auto;border-radius:7px;display:grid;place-items:center;font-size:.82rem;font-weight:700}
+  .cellmark.on{background:var(--accent);color:#fff}
+  .cellmark.off{color:var(--faint);font-weight:400}
+  .tally{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:1.1rem}
+  .chip{font-size:.82rem;border:1px solid var(--border);border-radius:99px;padding:.28em .75em;display:inline-flex;gap:.5em;align-items:center;background:var(--surface)}
+  .chip b{color:var(--accent);font-variant-numeric:tabular-nums}
+  .legend{font-size:.8rem;color:var(--muted);margin:.6rem 0 0}
+
+  /* ---- results ---- */
+  .rank{list-style:none;margin:1.2rem 0 0;padding:0;display:grid;gap:.5rem}
+  .rk{display:flex;align-items:center;gap:1rem;padding:.75rem .9rem;border:1px solid var(--border);border-radius:11px;background:var(--surface)}
+  .rk.top{border-color:var(--accent);background:var(--accent-soft)}
+  .place{flex:none;width:2.1em;height:2.1em;border-radius:9px;display:grid;place-items:center;font-weight:700;font-variant-numeric:tabular-nums;background:var(--surface-2);color:var(--muted)}
+  .rk.top .place{background:var(--accent);color:#fff}
+  .rk .label{flex:1 1 auto;font-size:1.06rem;font-weight:500}
+  .rk .score{font-size:.8rem;color:var(--faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);
+    padding:.6em 1.1em;border-radius:9px;font-size:.86rem;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .foot{margin-top:1.5rem;font-size:.74rem;color:var(--faint);text-align:center}
+  .hide{display:none!important}
+  @media (max-width:480px){.pair{grid-template-columns:1fr;gap:.7rem}.vs{padding:.1rem 0}}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+
+    <!-- ============ SETUP ============ -->
+    <section id="setup">
+      <p class="eyebrow">Prioritizing Grid</p>
+      <h1>What actually matters most?</h1>
+      <p class="sub">List what you're weighing, then judge it two at a time. Comparing a pair is easier and less biased than ranking everything at once — and the tool keeps score for you.</p>
+
+      <ol class="steps">
+        <li><b>List your items.</b> Around 10 works well — enough to matter, few enough to stay manageable. Add as many as you like.</li>
+        <li><b>Judge each pair.</b> One question at a time: this one, or that one?</li>
+        <li><b>Get your ranking,</b> ordered by how many comparisons each item won.</li>
+      </ol>
+
+      <hr class="hr">
+
+      <div class="addrow">
+        <input type="text" id="addInput" placeholder="Add an item and press Enter…" autocomplete="off" aria-label="Add an item">
+        <button class="btn" id="addBtn">Add</button>
+      </div>
+      <ul class="items" id="itemList"></ul>
+      <p class="empty" id="emptyNote">No items yet. Add at least two to begin.</p>
+
+      <div class="workload" id="workload">
+        <span class="big tnum" id="wlNum">0</span>
+        <span class="lbl" id="wlText">comparisons to make</span>
+      </div>
+      <p class="caution hide" id="wlCaution"></p>
+
+      <div class="row between" style="margin-top:1.4rem">
+        <button class="link subtle" id="exampleBtn">Load an example</button>
+        <div class="row">
+          <button class="link subtle" id="clearBtn">Clear all</button>
+          <button class="btn" id="startBtn" disabled>Start comparing →</button>
+        </div>
+      </div>
+      <div class="exrow">
+        <span class="exwrap">
+          <button class="link subtle exlink" id="expressBtn" disabled>In a rush? Compare faster ⚡</button>
+          <span class="tipbox" role="tooltip">
+            <b>Express mode</b> skips questions your earlier answers already settle. If
+            <span class="fx">A &gt; B</span> and <span class="fx">B &gt; C</span>, it takes
+            <span class="fx">A &gt; C</span> as given — so it asks far fewer times (about 20 instead of 45 for 10 items).
+            Works best when your choices are consistent.
+          </span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ============ COMPARE (full pairwise) ============ -->
+    <section id="compare" class="hide">
+      <div class="topbar">
+        <button class="link subtle" id="backToSetup">← Edit items</button>
+        <span class="count tnum" id="flowCount"></span>
+      </div>
+      <div class="bar"><i id="flowFill"></i></div>
+
+      <p class="ask">Which matters more?</p>
+      <div class="pair">
+        <button class="choice" id="choiceA" type="button">
+          <span class="check">✓</span><span class="tag">Option</span><span class="cnum" id="numA">1</span><span id="nameA">A</span>
+        </button>
+        <span class="vs">vs</span>
+        <button class="choice" id="choiceB" type="button">
+          <span class="check">✓</span><span class="tag">Option</span><span class="cnum" id="numB">2</span><span id="nameB">B</span>
+        </button>
+      </div>
+
+      <div class="navrow">
+        <button class="btn ghost" id="prevBtn">← Back</button>
+        <span class="hint"><kbd>1</kbd>/<kbd>2</kbd> or <kbd>←</kbd>/<kbd>→</kbd> · <kbd>⌫</kbd> back</span>
+        <span class="altlinks">
+          <button class="link subtle" id="toGrid">Use the grid ▦</button>
+          <span class="exwrap">
+            <button class="link subtle" id="expressBtn2">Compare faster ⚡</button>
+            <span class="tipbox" role="tooltip">
+              <b>Express mode</b> skips questions your earlier answers already settle. If
+              <span class="fx">A &gt; B</span> and <span class="fx">B &gt; C</span>, it takes
+              <span class="fx">A &gt; C</span> as given — so it asks far fewer times. Your answers so far carry over.
+            </span>
+          </span>
+        </span>
+      </div>
+    </section>
+
+    <!-- ============ EXPRESS (transitivity-skipping) ============ -->
+    <section id="express" class="hide">
+      <div class="topbar">
+        <button class="link subtle" id="exToSetup">← Edit items</button>
+        <span class="count tnum" id="exCount"></span>
+      </div>
+      <div class="bar"><i id="exFill"></i></div>
+      <div id="exBody"></div>
+      <div class="navrow">
+        <button class="btn ghost" id="exPrev">← Back</button>
+        <span class="hint"><kbd>1</kbd>/<kbd>2</kbd> or <kbd>←</kbd>/<kbd>→</kbd> · <kbd>⌫</kbd> back</span>
+        <button class="link subtle" id="exToFull">Full comparisons ▦</button>
+      </div>
+    </section>
+
+    <!-- ============ GRID ============ -->
+    <section id="gridview" class="hide">
+      <div class="topbar">
+        <button class="link subtle" id="gridBack">← Back to one-at-a-time</button>
+        <span class="count tnum" id="gridCount"></span>
+      </div>
+      <h2>The grid</h2>
+      <p class="legend">Click a cell to pick the winner of that pairing. Click again to switch, once more to clear. Tallies update live.</p>
+      <div class="gridwrap"><table class="grid" id="gridTable"></table></div>
+      <p class="legend" id="gridLegend"></p>
+      <div class="tally" id="tallyChips"></div>
+      <div class="navrow">
+        <span class="exwrap">
+          <button class="link subtle" id="expressBtn3">Finish faster with express ⚡</button>
+          <span class="tipbox" role="tooltip">
+            <b>Express mode</b> stops asking once your answers settle the order. If
+            <span class="fx">A &gt; B</span> and <span class="fx">B &gt; C</span>, it infers
+            <span class="fx">A &gt; C</span>. Anything you've already marked here carries over.
+          </span>
+        </span>
+        <button class="btn" id="gridResults">See ranking →</button>
+      </div>
+    </section>
+
+    <!-- ============ TIEBREAK ============ -->
+    <section id="tiebreak" class="hide">
+      <div class="topbar">
+        <button class="link subtle" id="tbBack">← Back</button>
+        <span class="count tnum" id="tbCount"></span>
+      </div>
+      <div class="bar"><i id="tbFill"></i></div>
+      <div id="tbBody"></div>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section id="results" class="hide">
+      <div class="topbar">
+        <button class="link subtle" id="resBack">← Keep comparing</button>
+        <span class="count tnum" id="resCount"></span>
+      </div>
+      <p class="eyebrow">Your ranking</p>
+      <h1 id="resHead">In priority order</h1>
+      <ol class="rank" id="rankList"></ol>
+      <p class="legend hide" id="tieNote"></p>
+      <div class="row between" style="margin-top:1.6rem">
+        <button class="link subtle" id="resEdit">← Edit items</button>
+        <div class="row">
+          <button class="btn ghost" id="copyBtn">Copy list</button>
+          <button class="btn ghost" id="dlBtn">Download</button>
+          <button class="btn" id="restartBtn">Start over</button>
+        </div>
+      </div>
+    </section>
+
+    <p class="foot">Saved automatically in this browser</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY="prioritizing-grid-v3";
+  var uid=1, exBusy=false;
+  var state={items:[],decisions:{},tieResults:{},mode:"full",resultMode:null,ex:null,exHist:[],expressStats:null,stage:"setup",idx:0};
+
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+  function load(){
+    try{
+      var s=JSON.parse(localStorage.getItem(KEY)||"null");
+      if(s&&Array.isArray(s.items)){
+        state=s;state.decisions=state.decisions||{};state.tieResults=state.tieResults||{};state.exHist=state.exHist||[];
+        state.idx=state.idx||0;var mx=0;state.items.forEach(function(it){if(it.id>mx)mx=it.id;});uid=mx+1;
+      }
+    }catch(e){}
+  }
+
+  var $=function(id){return document.getElementById(id);};
+  function clone(o){return JSON.parse(JSON.stringify(o));}
+  function pairKey(a,b){return a<b?a+":"+b:b+":"+a;}
+  function pairs(){var o=[],it=state.items;for(var i=0;i<it.length;i++)for(var j=i+1;j<it.length;j++)o.push([it[i],it[j]]);return o;}
+  function totalPairs(){var n=state.items.length;return n*(n-1)/2;}
+  function comparisonsFor(n){return n*(n-1)/2;}
+  function decidedCount(){var c=0,ps=pairs();for(var i=0;i<ps.length;i++)if(state.decisions[pairKey(ps[i][0].id,ps[i][1].id)]!=null)c++;return c;}
+  function allDecided(){return totalPairs()>0&&decidedCount()===totalPairs();}
+  function score(id){var s=0,ps=pairs();for(var i=0;i<ps.length;i++){var k=pairKey(ps[i][0].id,ps[i][1].id);if(state.decisions[k]===id)s++;}return s;}
+  function indexById(id){for(var i=0;i<state.items.length;i++)if(state.items[i].id===id)return i+1;return 0;}
+  function nameById(id){for(var i=0;i<state.items.length;i++)if(state.items[i].id===id)return state.items[i].name;return "";}
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function clearDerived(){state.tieResults={};state.ex=null;state.exHist=[];state.resultMode=null;state.expressStats=null;}
+
+  var SECT={setup:"setup",compare:"compare",express:"express",grid:"gridview",tiebreak:"tiebreak",results:"results"};
+  function show(stage){
+    state.stage=stage;
+    Object.keys(SECT).forEach(function(k){$(SECT[k]).classList.add("hide");});
+    if(SECT[stage])$(SECT[stage]).classList.remove("hide");
+    save();
+  }
+  function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show");},1600);}
+
+  // ---------- setup ----------
+  function renderItems(){
+    var list=$("itemList");list.innerHTML="";
+    state.items.forEach(function(it,i){
+      var li=document.createElement("li");li.className="item";
+      var num=document.createElement("span");num.className="num";num.textContent=i+1;
+      var inp=document.createElement("input");inp.className="name";inp.type="text";inp.value=it.name;inp.setAttribute("aria-label","Item "+(i+1));
+      inp.addEventListener("input",function(){it.name=inp.value;save();});
+      var del=document.createElement("button");del.className="del";del.textContent="✕";del.setAttribute("aria-label","Remove item");
+      del.addEventListener("click",function(){state.items.splice(i,1);clearDerived();renderItems();refreshSetup();});
+      li.appendChild(num);li.appendChild(inp);li.appendChild(del);list.appendChild(li);
+    });
+    $("emptyNote").style.display=state.items.length?"none":"block";
+  }
+  function refreshSetup(){
+    var n=state.items.length,c=comparisonsFor(n);
+    $("startBtn").disabled=n<2;$("expressBtn").disabled=n<2;
+    $("wlNum").textContent=c;
+    $("wlText").innerHTML=n<2?"comparisons to make":("comparisons to make · <b>"+n+"</b> item"+(n===1?"":"s"));
+    var cau=$("wlCaution");
+    if(c>45){cau.classList.remove("hide");cau.textContent="Heads up: "+c+" comparisons is a lot to judge in one sitting. Fewer items (around 10) keeps each decision sharp — or try express mode below.";}
+    else cau.classList.add("hide");
+    save();
+  }
+  function addItem(name){name=(name||"").trim();if(!name)return;state.items.push({id:uid++,name:name});clearDerived();renderItems();refreshSetup();}
+
+  $("addBtn").addEventListener("click",function(){addItem($("addInput").value);$("addInput").value="";$("addInput").focus();});
+  $("addInput").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();addItem(this.value);this.value="";}});
+  $("clearBtn").addEventListener("click",function(){if(state.items.length&&confirm("Remove all items?")){state.items=[];state.decisions={};clearDerived();renderItems();refreshSetup();}});
+  $("exampleBtn").addEventListener("click",function(){
+    state.items=[];state.decisions={};clearDerived();
+    ["Compensation & benefits","Growth & learning","Work–life balance","Team & manager","Company mission",
+     "Remote flexibility","Job security","Commute / location","Prestige & title","Day-to-day work itself"]
+      .forEach(function(n){state.items.push({id:uid++,name:n});});
+    renderItems();refreshSetup();
+  });
+
+  function firstUndecided(){var ps=pairs();for(var i=0;i<ps.length;i++)if(state.decisions[pairKey(ps[i][0].id,ps[i][1].id)]==null)return i;return ps.length?ps.length-1:0;}
+  function startFull(){state.mode="full";state.resultMode=null;state.idx=firstUndecided();if(allDecided())goToResults();else{show("compare");renderFlow();}}
+  $("startBtn").addEventListener("click",startFull);
+  $("backToSetup").addEventListener("click",function(){show("setup");refreshSetup();});
+  $("resEdit").addEventListener("click",function(){show("setup");refreshSetup();});
+
+  // ---------- full compare flow ----------
+  function renderFlow(){
+    var ps=pairs();if(!ps.length){show("setup");refreshSetup();return;}
+    state.idx=Math.max(0,Math.min(state.idx,ps.length-1));
+    var a=ps[state.idx][0],b=ps[state.idx][1],k=pairKey(a.id,b.id),win=state.decisions[k];
+    $("nameA").textContent=a.name;$("nameB").textContent=b.name;
+    $("numA").textContent=indexById(a.id);$("numB").textContent=indexById(b.id);
+    $("choiceA").classList.toggle("chosen",win===a.id);$("choiceB").classList.toggle("chosen",win===b.id);
+    $("choiceA").dataset.id=a.id;$("choiceB").dataset.id=b.id;
+    var done=decidedCount(),tot=totalPairs();
+    $("flowCount").textContent="Comparison "+(state.idx+1)+" of "+tot+" · "+done+" decided";
+    $("flowFill").style.width=(tot?done/tot*100:0)+"%";
+    $("prevBtn").disabled=state.idx<=0;save();
+  }
+  function choose(win){
+    var ps=pairs(),pair=ps[state.idx];if(!pair)return;
+    var k=pairKey(pair[0].id,pair[1].id);
+    state.decisions[k]=win;state.tieResults={};state.resultMode=null;
+    $("choiceA").classList.toggle("chosen",win===pair[0].id);$("choiceB").classList.toggle("chosen",win===pair[1].id);save();
+    setTimeout(function(){
+      if(allDecided()){goToResults();return;}
+      var next=-1;
+      for(var off=1;off<=ps.length;off++){var i=(state.idx+off)%ps.length;if(state.decisions[pairKey(ps[i][0].id,ps[i][1].id)]==null){next=i;break;}}
+      state.idx=next<0?Math.min(state.idx+1,ps.length-1):next;renderFlow();
+    },240);
+  }
+  $("choiceA").addEventListener("click",function(){choose(+this.dataset.id);});
+  $("choiceB").addEventListener("click",function(){choose(+this.dataset.id);});
+  $("prevBtn").addEventListener("click",function(){if(state.idx>0){state.idx--;renderFlow();}});
+  $("toGrid").addEventListener("click",function(){show("grid");renderGrid();});
+
+  // ---------- express (binary-insertion, transitivity-skipping) ----------
+  function initExpress(){
+    state.mode="express";state.resultMode=null;state.expressStats=null;
+    state.ex={sorted:[],queue:state.items.map(function(i){return i.id;}),cur:null,lo:0,hi:0,mid:0,curKey:null,oppId:null,asked:0};
+    state.exHist=[];show("express");seekExpress();
+  }
+  function seekExpress(){
+    var ex=state.ex;if(!ex){show("setup");return;}
+    while(true){
+      if(ex.cur==null){
+        if(ex.queue.length===0){finishExpress();return;}
+        ex.cur=ex.queue.shift();
+        if(ex.sorted.length===0){ex.sorted.push(ex.cur);ex.cur=null;continue;}
+        ex.lo=0;ex.hi=ex.sorted.length;
+      }
+      if(ex.lo>=ex.hi){ex.sorted.splice(ex.lo,0,ex.cur);ex.cur=null;continue;}
+      ex.mid=(ex.lo+ex.hi)>>1;
+      var opp=ex.sorted[ex.mid],key=pairKey(ex.cur,opp),known=state.decisions[key];
+      if(known!=null){if(known===ex.cur)ex.hi=ex.mid;else ex.lo=ex.mid+1;continue;} // inferred / already answered
+      ex.curKey=key;ex.oppId=opp;renderExpressQuestion();save();return;
+    }
+  }
+  function exCard(id,isCur){
+    return '<button class="choice" type="button" data-side="'+(isCur?"cur":"opp")+'" data-id="'+id+'">'+
+      '<span class="check">✓</span><span class="tag">Option</span>'+
+      '<span class="cnum">'+indexById(id)+'</span><span>'+escapeHtml(nameById(id))+'</span></button>';
+  }
+  function renderExpressQuestion(){
+    exBusy=false;var ex=state.ex,n=state.items.length;
+    $("exBody").innerHTML='<p class="ask"><span class="tb">Express</span><br>Which matters more?</p>'+
+      '<div class="pair">'+exCard(ex.cur,true)+'<span class="vs">vs</span>'+exCard(ex.oppId,false)+'</div>';
+    Array.prototype.forEach.call($("exBody").querySelectorAll(".choice"),function(btn){
+      btn.addEventListener("click",function(){
+        if(exBusy)return;exBusy=true;btn.classList.add("chosen");
+        var side=btn.dataset.side;setTimeout(function(){expressAnswer(side==="cur");},200);
+      });
+    });
+    var placing=ex.sorted.length+1;
+    $("exCount").textContent="Placing item "+Math.min(placing,n)+" of "+n+" · "+ex.asked+" comparison"+(ex.asked===1?"":"s")+" so far";
+    $("exFill").style.width=(n?ex.sorted.length/n*100:0)+"%";
+    $("exPrev").disabled=state.exHist.length===0;
+  }
+  function expressAnswer(choseCur){
+    var ex=state.ex;
+    state.exHist.push({snap:clone(ex),key:ex.curKey}); // snapshot BEFORE mutating (asked not yet incremented)
+    ex.asked++;
+    state.decisions[ex.curKey]=choseCur?ex.cur:ex.oppId;
+    if(choseCur)ex.hi=ex.mid;else ex.lo=ex.mid+1;
+    save();seekExpress();
+  }
+  function expressBack(){
+    if(!state.exHist.length)return;
+    var last=state.exHist.pop();state.ex=last.snap;delete state.decisions[last.key];save();seekExpress();
+  }
+  function finishExpress(){
+    state.resultMode="express";state.expressStats={asked:state.ex.asked,full:totalPairs()};show("results");renderResults();
+  }
+  $("expressBtn").addEventListener("click",initExpress);
+  $("expressBtn2").addEventListener("click",initExpress);
+  $("expressBtn3").addEventListener("click",initExpress);
+  $("exToSetup").addEventListener("click",function(){show("setup");refreshSetup();});
+  $("exToFull").addEventListener("click",function(){startFull();});
+  $("exPrev").addEventListener("click",expressBack);
+
+  // ---------- grid ----------
+  function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+  function renderGrid(){
+    var it=state.items,t=$("gridTable");t.innerHTML="";
+    var head=document.createElement("tr");head.appendChild(el("th","corner",""));
+    it.forEach(function(x,j){head.appendChild(el("th",null,String(j+1)));});t.appendChild(head);
+    it.forEach(function(rowItem,i){
+      var tr=document.createElement("tr");var lab=el("th","rowlab",(i+1)+". "+rowItem.name);lab.title=rowItem.name;tr.appendChild(lab);
+      it.forEach(function(colItem,j){
+        if(j<=i){tr.appendChild(el("td","blocked",""));return;}
+        var td=document.createElement("td");td.className="cell";
+        var k=pairKey(rowItem.id,colItem.id),win=state.decisions[k];
+        var mark=el("div","cellmark "+(win!=null?"on":"off"),win!=null?String(indexById(win)):"·");
+        td.title=(i+1)+". "+rowItem.name+"  vs  "+(j+1)+". "+colItem.name;td.appendChild(mark);
+        td.addEventListener("click",function(){
+          var cur=state.decisions[k];
+          if(cur==null)state.decisions[k]=rowItem.id;else if(cur===rowItem.id)state.decisions[k]=colItem.id;else delete state.decisions[k];
+          state.tieResults={};state.ex=null;state.exHist=[];state.resultMode=null;renderGrid();
+        });
+        tr.appendChild(td);
+      });
+      t.appendChild(tr);
+    });
+    $("gridLegend").textContent="Columns match the numbered list. A filled number = the winner of that pairing.";
+    var chips=$("tallyChips");chips.innerHTML="";
+    it.slice().sort(function(a,b){return score(b.id)-score(a.id);}).forEach(function(item){
+      var c=document.createElement("span");c.className="chip";
+      c.innerHTML="<span>"+escapeHtml(indexById(item.id)+". "+item.name)+"</span> <b>"+score(item.id)+"</b>";chips.appendChild(c);
+    });
+    $("gridCount").textContent=decidedCount()+" of "+totalPairs()+" decided";save();
+  }
+  $("gridBack").addEventListener("click",function(){state.mode="full";state.idx=firstUndecided();show("compare");renderFlow();});
+  $("gridResults").addEventListener("click",function(){state.resultMode=null;goToResults();});
+
+  // ---------- tie grouping (full mode) ----------
+  function groupsByScore(){
+    var arr=state.items.map(function(it,i){return {id:it.id,score:score(it.id),ix:i};});
+    arr.sort(function(a,b){return b.score-a.score||a.ix-b.ix;});
+    var groups=[],cur=null;
+    arr.forEach(function(r){if(cur&&cur.score===r.score)cur.ids.push(r.id);else{cur={score:r.score,ids:[r.id]};groups.push(cur);}});
+    return groups;
+  }
+  function tieSig(ids){return ids.slice().sort(function(a,b){return a-b;}).join(",");}
+  function groupResolved(g){var r=state.tieResults[tieSig(g.ids)];return !!(r&&r.length===g.ids.length);}
+  function pendingTieGroups(){return groupsByScore().filter(function(g){return g.ids.length>=2&&!groupResolved(g);});}
+  function goToResults(){
+    if(state.mode==="full"&&allDecided()&&pendingTieGroups().length){show("tiebreak");renderTiebreak();}
+    else{show("results");renderResults();}
+  }
+
+  // ---------- tiebreak ----------
+  function renderTiebreak(){
+    var pend=pendingTieGroups();
+    if(!pend.length){show("results");renderResults();return;}
+    var g=pend[0],sig=tieSig(g.ids);
+    var allTie=groupsByScore().filter(function(x){return x.ids.length>=2;}).length,doneTie=allTie-pend.length;
+    $("tbCount").textContent="Tiebreaker "+(doneTie+1)+" of "+allTie;
+    $("tbFill").style.width=(allTie?doneTie/allTie*100:0)+"%";
+    var body=$("tbBody");body.innerHTML="";
+    if(g.ids.length===2){
+      var a=g.ids[0],b=g.ids[1];
+      body.innerHTML='<p class="ask"><span class="tb">Currently tied</span><br>These two are even so far — which matters more?</p>'+
+        '<div class="pair">'+tieCard(a)+'<span class="vs">vs</span>'+tieCard(b)+'</div>';
+      Array.prototype.forEach.call(body.querySelectorAll(".choice"),function(btn){
+        btn.addEventListener("click",function(){var w=+this.dataset.id,other=w===a?b:a;state.tieResults[sig]=[w,other];save();advanceTie();});
+      });
+    }else{
+      var chosen=state.tieResults[sig]||[];
+      var html='<p class="ask"><span class="tb">Currently tied</span><br>'+g.ids.length+' items are even — click them in order of importance, most important first.</p><div class="orderlist">';
+      g.ids.forEach(function(id){var pos=chosen.indexOf(id);
+        html+='<button class="oitem" data-id="'+id+'"'+(pos>=0?' disabled':'')+'><span class="rankbadge">'+(pos>=0?(pos+1):"")+'</span><span>'+escapeHtml(nameById(id))+'</span></button>';});
+      html+='</div><div class="row" style="margin-top:1rem"><button class="link subtle" id="tbReset">Reset this list</button></div>';
+      body.innerHTML=html;
+      Array.prototype.forEach.call(body.querySelectorAll(".oitem"),function(btn){
+        btn.addEventListener("click",function(){var id=+this.dataset.id,arr=(state.tieResults[sig]||[]).slice();
+          if(arr.indexOf(id)>=0)return;arr.push(id);state.tieResults[sig]=arr;save();if(arr.length===g.ids.length)advanceTie();else renderTiebreak();});
+      });
+      $("tbReset").addEventListener("click",function(){delete state.tieResults[sig];save();renderTiebreak();});
+    }
+    save();
+  }
+  function tieCard(id){return '<button class="choice" type="button" data-id="'+id+'"><span class="check">✓</span><span class="tag">Option</span><span class="cnum">'+indexById(id)+'</span><span>'+escapeHtml(nameById(id))+'</span></button>';}
+  function advanceTie(){setTimeout(function(){if(pendingTieGroups().length)renderTiebreak();else{show("results");renderResults();}},220);}
+  $("tbBack").addEventListener("click",function(){state.mode="full";state.idx=firstUndecided();show("compare");renderFlow();});
+
+  // ---------- results ----------
+  function finalOrder(){
+    var groups=groupsByScore(),out=[];
+    groups.forEach(function(g){
+      if(g.ids.length>=2){var r=state.tieResults[tieSig(g.ids)];out=out.concat(r&&r.length===g.ids.length?r:g.ids);}
+      else out.push(g.ids[0]);
+    });
+    return out;
+  }
+  function isExpressDone(){return state.resultMode==="express"&&state.ex&&state.ex.sorted.length===state.items.length;}
+  function currentOrderIds(){return isExpressDone()?state.ex.sorted.slice():finalOrder();}
+  function renderResults(){
+    var express=isExpressDone(),order=currentOrderIds(),list=$("rankList");list.innerHTML="";
+    var maxWins=Math.max(0,state.items.length-1);
+    order.forEach(function(id,i){
+      var li=document.createElement("li");li.className="rk"+(i===0?" top":"");
+      var sc=express?"":('<span class="score">'+score(id)+"/"+maxWins+'</span>');
+      li.innerHTML='<span class="place">'+(i+1)+'</span><span class="label">'+escapeHtml(nameById(id))+'</span>'+sc;
+      list.appendChild(li);
+    });
+    var note=$("tieNote");
+    if(express){
+      $("resHead").textContent="In priority order";
+      var st=state.expressStats||{asked:0,full:totalPairs()};
+      $("resCount").textContent="Express · "+st.asked+" of "+st.full+" comparisons asked";
+      note.classList.remove("hide");
+      note.textContent="Express mode inferred the rest from your choices (if A > B and B > C, then A > C), so it skipped the comparisons those answers already settled.";
+      $("resBack").style.display="none";
+    }else{
+      var tot=totalPairs(),done=decidedCount();
+      $("resHead").textContent=done>=tot?"In priority order":"So far (partial)";
+      $("resCount").textContent=done+" of "+tot+" comparisons done";
+      $("resBack").style.display="";
+      var hadTies=groupsByScore().some(function(g){return g.ids.length>=2;});
+      if(hadTies&&done>=tot){note.classList.remove("hide");note.textContent="Items that tied on wins were ordered by your tiebreaker choices.";}
+      else note.classList.add("hide");
+    }
+    save();
+  }
+  $("resBack").addEventListener("click",function(){state.mode="full";state.idx=firstUndecided();show("compare");renderFlow();});
+  $("restartBtn").addEventListener("click",function(){if(confirm("Clear everything and start fresh?")){state={items:[],decisions:{},tieResults:{},mode:"full",resultMode:null,ex:null,exHist:[],expressStats:null,stage:"setup",idx:0};uid=1;renderItems();refreshSetup();show("setup");}});
+
+  function numberedList(){return currentOrderIds().map(function(id,i){return (i+1)+". "+nameById(id);}).join("\n");}
+  $("copyBtn").addEventListener("click",function(){
+    var txt=numberedList();
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){toast("Copied");},function(){fallbackCopy(txt);});
+    else fallbackCopy(txt);
+  });
+  function fallbackCopy(txt){var ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");toast("Copied");}catch(e){toast("Copy failed");}document.body.removeChild(ta);}
+  $("dlBtn").addEventListener("click",function(){
+    var txt="Priorities\n\n"+numberedList()+"\n";var blob=new Blob([txt],{type:"text/plain"});var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download="priorities.txt";document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(a.href);},1000);toast("Downloaded");
+  });
+
+  // ---------- keyboard ----------
+  document.addEventListener("keydown",function(e){
+    if(state.stage==="compare"){
+      var ps=pairs(),pair=ps[state.idx];if(!pair)return;
+      if(e.key==="1"||e.key==="ArrowLeft"){e.preventDefault();choose(pair[0].id);}
+      else if(e.key==="2"||e.key==="ArrowRight"){e.preventDefault();choose(pair[1].id);}
+      else if(e.key==="Backspace"){e.preventDefault();if(state.idx>0){state.idx--;renderFlow();}}
+    }else if(state.stage==="express"){
+      if(e.key==="1"||e.key==="ArrowLeft"){e.preventDefault();var l=$("exBody").querySelector('.choice[data-side="cur"]');if(l)l.click();}
+      else if(e.key==="2"||e.key==="ArrowRight"){e.preventDefault();var r=$("exBody").querySelector('.choice[data-side="opp"]');if(r)r.click();}
+      else if(e.key==="Backspace"){e.preventDefault();expressBack();}
+    }
+  });
+
+  // ---------- boot ----------
+  load();renderItems();refreshSetup();
+  if(state.stage==="compare"){show("compare");renderFlow();}
+  else if(state.stage==="express"&&state.ex){show("express");seekExpress();}
+  else if(state.stage==="grid"){show("grid");renderGrid();}
+  else if(state.stage==="tiebreak"){show("tiebreak");renderTiebreak();}
+  else if(state.stage==="results"){show("results");renderResults();}
+  else show("setup");
+})();
+</script>
+</body>
+</html>
