@@ -4,6 +4,8 @@ Interactive, browser-based remakes of the analog self-assessment exercises popul
 
 **Live:** https://anewt225.github.io/parachute/
 
+![Comparing two items — "Compensation & benefits" vs "Growth & learning"](screenshots/compare.png)
+
 ---
 
 ## Tools
@@ -17,6 +19,14 @@ Rank any list by the classic **pairwise-comparison** method: instead of trying t
 - **Real tiebreakers** — items that finish tied are re-compared (or, for a three-way-plus tie, ordered directly) rather than resolved silently.
 - **Express mode** — an optional faster path that skips any comparison your earlier answers already imply (if A > B and B > C, it takes A > C as given), cutting a 10-item ranking from 45 comparisons to roughly 20.
 - **Clean export** — copy or download the result as a plain numbered list.
+
+| The ranked result | The grid view, with live tallies |
+|---|---|
+| ![Ranked priority list, 1 through 10](screenshots/results.png) | ![Triangular comparison grid with running tallies](screenshots/grid.png) |
+
+Setup shows the total number of comparisons up front, so the workload is never a surprise:
+
+![Setup screen listing items with a live comparison-count indicator](screenshots/setup.png)
 
 ---
 
